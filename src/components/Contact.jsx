@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
 import SectionHeading from './SectionHeading'
-import { post } from '../api'
+import { post, API_BASE } from '../api'
 
 const Contact = () => {
   const [status, setStatus] = useState({ type: null, text: '' })
@@ -46,6 +46,7 @@ const Contact = () => {
           onSubmit={async (event) => {
             event.preventDefault()
             setStatus({ type: null, text: '' })
+            console.log('Contact form submitting to', API_BASE + '/api/contact')
             const form = event.currentTarget
             const name = form.name.value
             const email = form.email.value
@@ -57,7 +58,7 @@ const Contact = () => {
             } catch (err) {
               console.error(err)
               const text = err && err.message ? String(err.message) : 'Failed to send message. Please try again later.'
-              setStatus({ type: 'error', text })
+              setStatus({ type: 'error', text: `${text} (API: ${API_BASE})` })
             }
           }}
         >
