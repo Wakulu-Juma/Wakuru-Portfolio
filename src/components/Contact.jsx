@@ -4,6 +4,7 @@ import SectionHeading from './SectionHeading'
 import { post } from '../api'
 
 const Contact = () => {
+  const [status, setStatus] = useState({ type: null, text: '' })
   return (
     <section id="contact" className="section-pad">
       <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr]">
@@ -44,17 +45,19 @@ const Contact = () => {
           className="glass flex flex-col gap-4 rounded-3xl p-6"
           onSubmit={async (event) => {
             event.preventDefault()
+            setStatus({ type: null, text: '' })
             const form = event.currentTarget
             const name = form.name.value
             const email = form.email.value
             const message = form.message.value
             try {
               await post('/api/contact', { name, email, message })
-              alert('Message sent — thank you!')
+              setStatus({ type: 'success', text: 'Message sent — thank you!' })
               form.reset()
             } catch (err) {
               console.error(err)
-              alert('Failed to send message. Please try again later.')
+              const text = err && err.message ? String(err.message) : 'Failed to send message. Please try again later.'
+              setStatus({ type: 'error', text })
             }
           }}
         >
@@ -71,6 +74,11 @@ const Contact = () => {
             <textarea id="message" name="message" rows="4" className="input-field" placeholder="Write your message" required />
           </div>
           <button type="submit" className="btn-primary">Send Message</button>
+          {status.text && (
+            <div className={`mt-2 text-sm ${status.type === 'success' ? 'text-green-400' : 'text-red-400'}`} role="status">
+              {status.text}
+            </div>
+          )}
         </motion.form>
       </div>
     </section>

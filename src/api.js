@@ -12,8 +12,25 @@ async function post(path, body) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body)
   })
-  if (!res.ok) throw new Error('Network error')
-  return res.json()
+
+  // Try to parse JSON body for success or error messages
+  const contentType = res.headers.get('content-type') || ''
+  let payload
+  try {
+    payload = contentType.includes('application/json') ? await res.json() : await res.text()
+  } catch (e) {
+    payload = null
+  }
+
+  if (!res.ok) {
+    const errMessage = (payload && payload.error) || (typeof payload === 'string' && payload) || 'Network error'
+    const err = new Error(errMessage)
+    err.status = res.status
+    err.payload = payload
+    throw err
+  }
+
+  return payload
 }
 
 export { API_BASE, get, post }
