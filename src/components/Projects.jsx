@@ -1,34 +1,42 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import SectionHeading from './SectionHeading'
-
-const projects = [
-  {
-    title: 'Data Visualization Dashboard',
-    description:
-      'Interactive analytics dashboard showcasing insights with responsive charts and KPI storytelling.',
-    tech: ['React', 'D3.js', 'Tailwind'],
-    github: '#',
-    demo: '#'
-  },
-  {
-    title: 'Machine Learning Classifier',
-    description:
-      'End-to-end ML workflow for classification with model evaluation and deployment-ready APIs.',
-    tech: ['Python', 'Scikit-learn', 'FastAPI'],
-    github: '#',
-    demo: '#'
-  },
-  {
-    title: 'Frontend Portfolio Website',
-    description:
-      'Modern personal portfolio with glassmorphism UI, smooth animations, and SEO-first layout.',
-    tech: ['React', 'Framer Motion', 'Vite'],
-    github: '#',
-    demo: '#'
-  }
-]
+import { get } from '../api'
 
 const Projects = () => {
+  const [projects, setProjects] = useState([])
+
+  useEffect(() => {
+    let mounted = true
+    get('/api/projects')
+      .then((data) => mounted && setProjects(data))
+      .catch(() => {
+        // ignore
+      })
+    return () => (mounted = false)
+  }, [])
+
+  const display = projects.length
+    ? projects
+    : [
+        {
+          title: 'Data Visualization Dashboard',
+          description:
+            'Interactive analytics dashboard showcasing insights with responsive charts and KPI storytelling.',
+          tech: ['React', 'D3.js', 'Tailwind'],
+          github: '#',
+          demo: '#'
+        },
+        {
+          title: 'Machine Learning Classifier',
+          description:
+            'End-to-end ML workflow for classification with model evaluation and deployment-ready APIs.',
+          tech: ['Python', 'Scikit-learn', 'FastAPI'],
+          github: '#',
+          demo: '#'
+        }
+      ]
+
   return (
     <section id="projects" className="section-pad section-alt">
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
@@ -39,9 +47,9 @@ const Projects = () => {
         />
 
         <div className="grid gap-6 lg:grid-cols-2">
-          {projects.map((project, index) => (
+          {display.map((project, index) => (
             <motion.article
-              key={project.title}
+              key={project.id || project.title}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
@@ -55,17 +63,17 @@ const Projects = () => {
                   <p className="mt-2 text-sm text-slate-300">{project.description}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {project.tech.map((item) => (
+                  {(project.tech || []).map((item) => (
                     <span key={item} className="chip chip-muted">
                       {item}
                     </span>
                   ))}
                 </div>
                 <div className="mt-auto flex flex-wrap gap-3">
-                  <a className="btn-secondary" href={project.github}>
+                  <a className="btn-secondary" href={project.github || '#'}>
                     GitHub
                   </a>
-                  <a className="btn-primary" href={project.demo}>
+                  <a className="btn-primary" href={project.demo || '#'}>
                     Live Demo
                   </a>
                 </div>

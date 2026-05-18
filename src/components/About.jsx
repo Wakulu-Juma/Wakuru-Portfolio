@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import SectionHeading from './SectionHeading'
+import { get } from '../api'
 
 const cardData = [
   {
@@ -20,6 +22,15 @@ const cardData = [
 ]
 
 const About = () => {
+  const [aboutContent, setAboutContent] = useState(null)
+
+  useEffect(() => {
+    let mounted = true
+    get('/api/about')
+      .then((data) => mounted && setAboutContent(data))
+      .catch(() => {})
+    return () => (mounted = false)
+  }, [])
   return (
     <section id="about" className="section-pad section-alt">
       <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[1.1fr_0.9fr]">
@@ -72,8 +83,8 @@ const About = () => {
               </div>
             </div>
             <div className="mt-6 space-y-3 text-sm text-slate-300">
-              <p>Final-year student engineer specializing in frontend, backend, and data science.</p>
-              <p>Focused on building human-centered, intelligent products for real-world impact.</p>
+              <p>{aboutContent?.content || 'Final-year student engineer specializing in frontend, backend, and data science.'}</p>
+              <p>{aboutContent?.extra || 'Focused on building human-centered, intelligent products for real-world impact.'}</p>
             </div>
             <div className="mt-6 flex flex-wrap gap-2">
               {['Research', 'Product', 'Analytics', 'UX Engineering'].map((item) => (

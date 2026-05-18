@@ -1,5 +1,7 @@
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import SectionHeading from './SectionHeading'
+import { post } from '../api'
 
 const Contact = () => {
   return (
@@ -40,7 +42,21 @@ const Contact = () => {
           viewport={{ once: true, amount: 0.4 }}
           transition={{ duration: 0.6 }}
           className="glass flex flex-col gap-4 rounded-3xl p-6"
-          onSubmit={(event) => event.preventDefault()}
+          onSubmit={async (event) => {
+            event.preventDefault()
+            const form = event.currentTarget
+            const name = form.name.value
+            const email = form.email.value
+            const message = form.message.value
+            try {
+              await post('/api/contact', { name, email, message })
+              alert('Message sent — thank you!')
+              form.reset()
+            } catch (err) {
+              console.error(err)
+              alert('Failed to send message. Please try again later.')
+            }
+          }}
         >
           <div>
             <label className="text-sm text-slate-200" htmlFor="name">Name</label>
