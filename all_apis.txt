@@ -1,0 +1,37 @@
+Project APIs
+
+Server root
+- GET / : Server health check (returns { ok: true, message: 'Wakuru backend' })
+
+Skills (/api/skills)
+- GET /api/skills : List all skills
+- POST /api/skills : Create a skill (body: { name, level, icon })
+- PUT /api/skills/:id : Update a skill (body: { name, level, icon })
+- DELETE /api/skills/:id : Delete a skill
+
+Contact (/api/contact)
+- POST /api/contact : Submit a contact message (body: { name, email, message })
+- GET /api/contact : List contact messages (admin)
+
+Projects (/api/projects)
+- GET /api/projects : List all projects
+- POST /api/projects : Create a project (body: { title, description, tech, github, demo })
+- PUT /api/projects/:id : Update a project (body: { title, description, tech, github, demo })
+- DELETE /api/projects/:id : Delete a project
+
+About (/api/about)
+- GET /api/about : Get about content
+- PUT /api/about : Update or create about content (body: { content, extra })
+
+Frontend helpers
+- `src/api.js` exposes `API_BASE`, `get(path)`, and `post(path, body)`. Default API base: VITE_API_URL or http://localhost:4000
+
+Files scanned
+- backend/server.js
+- backend/routes/skills.js
+- backend/routes/contact.js
+- backend/routes/projects.js
+- backend/routes/about.js
+- src/api.js
+
+Generated on: 2026-05-18
