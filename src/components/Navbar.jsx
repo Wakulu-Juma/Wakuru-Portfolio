@@ -162,7 +162,7 @@ const Navbar = () => {
       {open && hasScrolled && (
         <>
           <div
-            className="nav-fixed-layer fixed inset-0 z-[9997] bg-[#090512]/60"
+            className="nav-fixed-layer fixed inset-0 z-[9997] bg-[#090512]/75"
             aria-hidden="true"
             onClick={() => setOpen(false)}
           />
@@ -171,11 +171,11 @@ const Navbar = () => {
             id="portfolio-menu"
             className="nav-fixed-layer nav-fixed-panel z-[9999]"
           >
-            <div className="glass max-h-[calc(100vh-6rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain rounded-[1.85rem] border-white/10 bg-[rgba(15,10,31,0.96)] p-3 shadow-[0_26px_80px_rgba(0,0,0,0.34)]">
+            <div className="nav-menu-panel max-h-[calc(100vh-6rem-env(safe-area-inset-top,0px))] overflow-y-auto overscroll-contain rounded-[1.85rem] p-3">
               <div className="flex flex-col gap-5">
                 <a
                   href="#home"
-                  className="group flex items-center gap-3 rounded-[1.4rem] border border-white/10 bg-white/[0.06] p-4 transition hover:-translate-y-0.5 hover:border-roseglow-300/40"
+                  className="group flex items-center gap-3 rounded-[1.4rem] border border-white/15 bg-white/10 p-4 transition hover:-translate-y-0.5 hover:border-roseglow-300/40"
                   aria-label="Go to home"
                   onClick={() => setOpen(false)}
                 >
@@ -184,7 +184,7 @@ const Navbar = () => {
                   </span>
 
                   <div>
-                    <p className="text-[0.68rem] uppercase tracking-[0.3em] text-white/45">Wakuru</p>
+                    <p className="text-[0.68rem] uppercase tracking-[0.3em] text-white/70">Wakuru</p>
                     <p className="mt-1 text-sm font-semibold text-white">Juma Gilagali</p>
                   </div>
                 </a>
@@ -199,15 +199,13 @@ const Navbar = () => {
                         key={link.label}
                         href={link.href}
                         onClick={() => setOpen(false)}
-                        className={`group flex items-center gap-3 rounded-[1.25rem] border px-4 py-3 text-sm transition duration-300 hover:-translate-y-0.5 ${
-                          activeState
-                            ? 'border-roseglow-300/50 bg-white/10 text-white'
-                            : 'border-white/10 bg-white/[0.04] text-white/72 hover:border-white/20 hover:bg-white/[0.08] hover:text-white'
+                        className={`nav-menu-link group flex items-center gap-3 rounded-[1.25rem] border px-4 py-3 text-sm font-medium transition duration-300 hover:-translate-y-0.5 ${
+                          activeState ? 'is-active' : ''
                         }`}
                       >
                         <Icon
                           className={`h-4 w-4 ${
-                            activeState ? 'text-roseglow-200' : 'text-white/45 group-hover:text-white'
+                            activeState ? 'text-roseglow-200' : 'text-white/75 group-hover:text-white'
                           }`}
                         />
                         <span>{link.label}</span>
