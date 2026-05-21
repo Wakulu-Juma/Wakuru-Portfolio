@@ -8,8 +8,7 @@ const __dirname = path.dirname(__filename)
 const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true
-  },
-  outputFileTracingRoot: path.join(__dirname, '..')
+  }
 }
 
 export default nextConfig
