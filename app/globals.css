@@ -282,3 +282,77 @@ body::before {
   isolation: isolate;
   transform: translateZ(0);
 }
+
+/* Viewport-locked nav (outside .portfolio-root transform context) */
+#portfolio-nav-slot {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+.nav-fixed-layer {
+  position: fixed !important;
+  pointer-events: auto;
+}
+
+.nav-fixed-header {
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  left: 1rem;
+  right: 1rem;
+}
+
+@media (min-width: 768px) {
+  .nav-fixed-header {
+    left: 1.5rem;
+    right: auto;
+    width: min(96vw, 72rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .nav-fixed-header {
+    left: 5rem;
+  }
+}
+
+.nav-fixed-menu {
+  top: max(1rem, env(safe-area-inset-top, 0px));
+  right: max(1rem, env(safe-area-inset-right, 0px));
+}
+
+@media (min-width: 768px) {
+  .nav-fixed-menu {
+    right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .nav-fixed-menu {
+    right: 5rem;
+  }
+}
+
+.nav-fixed-panel {
+  top: calc(4.75rem + env(safe-area-inset-top, 0px));
+  left: 1rem;
+  right: 1rem;
+  max-width: 20rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (min-width: 768px) {
+  .nav-fixed-panel {
+    top: calc(5rem + env(safe-area-inset-top, 0px));
+    left: auto;
+    right: 1.5rem;
+    margin-right: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .nav-fixed-panel {
+    right: 5rem;
+  }
+}
