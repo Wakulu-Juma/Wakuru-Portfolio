@@ -1,44 +1,12 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
 import { ArrowUpRight, Github, Sparkles } from 'lucide-react'
 import SectionHeading from './SectionHeading'
-import { get } from '../api'
+import { FALLBACK_PORTFOLIO } from '../data/portfolioFallback'
 
-const Projects = () => {
-  const [projects, setProjects] = useState([])
-
-  useEffect(() => {
-    let mounted = true
-    get('/api/projects')
-      .then((data) => mounted && setProjects(data))
-      .catch(() => {
-        // ignore
-      })
-    return () => (mounted = false)
-  }, [])
-
-  const display = projects.length
-    ? projects
-    : [
-        {
-          title: 'Data Visualization Dashboard',
-          description:
-            'Interactive analytics dashboard showcasing insights with responsive charts and KPI storytelling.',
-          tech: ['React', 'D3.js', 'Tailwind'],
-          github: '#',
-          demo: '#'
-        },
-        {
-          title: 'Machine Learning Classifier',
-          description:
-            'End-to-end ML workflow for classification with model evaluation and deployment-ready APIs.',
-          tech: ['Python', 'Scikit-learn', 'FastAPI'],
-          github: '#',
-          demo: '#'
-        }
-      ]
+const Projects = ({ projects = FALLBACK_PORTFOLIO.projects }) => {
+  const display = projects.length ? projects : FALLBACK_PORTFOLIO.projects
 
   return (
     <section id="projects" className="section-pad section-alt">

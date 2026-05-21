@@ -1,44 +1,40 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
 import { BadgeCheck, GraduationCap, Sparkles, TrendingUp } from 'lucide-react'
 import SectionHeading from './SectionHeading'
-import { get } from '../api'
+import { FALLBACK_PORTFOLIO } from '../data/portfolioFallback'
 
-const cardData = [
-  {
-    title: 'Education',
-    description:
-      'BSc in Official Statistics, Eastern Africa Statistical Training Centre (EASTC). Expected graduation: July 2026.'
-  },
-  {
-    title: 'Technical Skills',
-    description:
-      'Frontend and backend development, data analysis, machine learning, and AI solution design with a focus on measurable impact.'
-  },
-  {
-    title: 'Career Goals',
-    description:
-      'Build intelligent, human-centered software systems and grow into a versatile software engineer and data-driven product builder.'
-  }
-]
+const About = ({ about = FALLBACK_PORTFOLIO.about, profile = FALLBACK_PORTFOLIO.profile, skills = FALLBACK_PORTFOLIO.skills, education = FALLBACK_PORTFOLIO.education }) => {
+  const primaryEducation = education?.[0] || FALLBACK_PORTFOLIO.education[0]
+  const featuredSkills = (skills || FALLBACK_PORTFOLIO.skills).slice(0, 4).map((skill) => skill.name)
 
-const About = () => {
-  const [aboutContent, setAboutContent] = useState(null)
-  const [stats, setStats] = useState([
-    { label: 'Projects', value: '18+' },
-    { label: 'Research Focus', value: 'AI + Data' },
-    { label: 'Graduation', value: 'Jul 2026' }
-  ])
+  const stats = [
+    { label: 'Projects', value: profile?.projectsStat || FALLBACK_PORTFOLIO.profile.projectsStat },
+    { label: 'Research Focus', value: profile?.researchStat || FALLBACK_PORTFOLIO.profile.researchStat },
+    { label: 'Graduation', value: primaryEducation?.endYear ? `Jul ${primaryEducation.endYear}` : 'Jul 2026' }
+  ]
 
-  useEffect(() => {
-    let mounted = true
-    get('/api/about')
-      .then((data) => mounted && setAboutContent(data))
-      .catch(() => {})
-    return () => (mounted = false)
-  }, [])
+  const cardData = [
+    {
+      title: 'Education',
+      description: primaryEducation
+        ? `${primaryEducation.degree || 'BSc'} in ${primaryEducation.field || 'Official Statistics'}, ${primaryEducation.school || 'EASTC'}. ${primaryEducation.description || 'Expected graduation: July 2026.'}`
+        : 'BSc in Official Statistics, Eastern Africa Statistical Training Centre (EASTC). Expected graduation: July 2026.'
+    },
+    {
+      title: 'Technical Skills',
+      description:
+        featuredSkills.length > 0
+          ? `${featuredSkills.join(', ')} and related engineering work focused on measurable impact.`
+          : 'Frontend and backend development, data analysis, machine learning, and AI solution design with a focus on measurable impact.'
+    },
+    {
+      title: 'Career Goals',
+      description:
+        about?.extra || 'Build intelligent, human-centered software systems and grow into a versatile software engineer and data-driven product builder.'
+    }
+  ]
 
   return (
     <section id="about" className="section-pad section-alt">
@@ -47,7 +43,7 @@ const About = () => {
           <SectionHeading
             eyebrow="About"
             title="Building elegant, data-driven digital experiences with a polished creative edge"
-            subtitle="I am Wakuru Juma Gilagali, a final-year student at the Eastern Africa Statistical Training Centre (EASTC), expected to graduate in July 2026. I am passionate about frontend and backend development, data analysis, machine learning, and building impactful digital solutions."
+            subtitle={about?.content || FALLBACK_PORTFOLIO.about.content}
           />
 
           <div className="grid gap-4 sm:grid-cols-3">
@@ -115,8 +111,8 @@ const About = () => {
               </div>
 
               <div className="relative mt-8 space-y-4 text-sm leading-7 text-white/72">
-                <p>{aboutContent?.content || 'Final-year student engineer specializing in frontend, backend, and data science.'}</p>
-                <p>{aboutContent?.extra || 'Focused on building human-centered, intelligent products for real-world impact.'}</p>
+                <p>{about?.content || 'Final-year student engineer specializing in frontend, backend, and data science.'}</p>
+                <p>{about?.extra || FALLBACK_PORTFOLIO.about.extra}</p>
               </div>
 
               <div className="relative mt-8 grid gap-3 sm:grid-cols-2">

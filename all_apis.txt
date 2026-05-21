@@ -3,35 +3,34 @@ Project APIs
 Server root
 - GET / : Server health check (returns { ok: true, message: 'Wakuru backend' })
 
-Skills (/api/skills)
-- GET /api/skills : List all skills
-- POST /api/skills : Create a skill (body: { name, level, icon })
-- PUT /api/skills/:id : Update a skill (body: { name, level, icon })
-- DELETE /api/skills/:id : Delete a skill
+Public read-only portfolio
+- GET /api/profile : Profile (hero, contact links, stats)
+- GET /api/about : About copy ({ content: bio, extra: summary })
+- GET /api/skills : List skills
+- GET /api/projects : List projects
+- GET /api/education : List education
+- POST /api/contact : Submit contact message (body: { name, email, message })
 
-Contact (/api/contact)
-- POST /api/contact : Submit a contact message (body: { name, email, message })
-- GET /api/contact : List contact messages (admin)
+About (admin write)
+- PUT /api/about : Update about via profile bio/summary (requires admin Bearer token)
 
-Projects (/api/projects)
-- GET /api/projects : List all projects
-- POST /api/projects : Create a project (body: { title, description, tech, github, demo })
-- PUT /api/projects/:id : Update a project (body: { title, description, tech, github, demo })
-- DELETE /api/projects/:id : Delete a project
+Admin (/api/admin) — Bearer token required except POST /login
+- POST /api/admin/login : { email, password }
+- GET /api/admin/session
+- GET /api/admin/profile
+- PUT /api/admin/profile : multipart for avatar upload
+- GET /api/admin/about
+- PUT /api/admin/about : { content, extra }
+- GET/POST/PUT/DELETE /api/admin/projects
+- GET/POST/PUT/DELETE /api/admin/skills
+- GET/POST/PUT/DELETE /api/admin/education
+- GET /api/admin/contacts
+- DELETE /api/admin/contacts/:id
 
-About (/api/about)
-- GET /api/about : Get about content
-- PUT /api/about : Update or create about content (body: { content, extra })
+Legacy public write routes removed; use /api/admin/* for mutations.
 
 Frontend helpers
-- `src/api.js` exposes `API_BASE`, `get(path)`, and `post(path, body)`. Default API base: `NEXT_PUBLIC_API_URL` or `http://localhost:4000`
+- `services/api.js` — public GET/POST
+- `services/adminApi.js` — authenticated admin CRUD
 
-Files scanned
-- backend/server.js
-- backend/routes/skills.js
-- backend/routes/contact.js
-- backend/routes/projects.js
-- backend/routes/about.js
-- src/api.js
-
-Generated on: 2026-05-18
+Generated on: 2026-05-21

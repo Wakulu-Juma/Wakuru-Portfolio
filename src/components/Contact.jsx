@@ -5,15 +5,16 @@ import { useState } from 'react'
 import { ArrowUpRight, Github, Mail, Linkedin, PhoneCall, Sparkles } from 'lucide-react'
 import SectionHeading from './SectionHeading'
 import { post, API_BASE } from '../api'
+import { FALLBACK_PORTFOLIO } from '../data/portfolioFallback'
 
-const Contact = () => {
+const Contact = ({ profile = FALLBACK_PORTFOLIO.profile }) => {
   const [status, setStatus] = useState({ type: null, text: '' })
 
   const contactLinks = [
-    { label: 'GitHub', href: '#', icon: Github },
-    { label: 'LinkedIn', href: '#', icon: Linkedin },
-    { label: 'Email', href: '#', icon: Mail },
-    { label: 'Call / Collaborate', href: '#', icon: PhoneCall }
+    { label: 'GitHub', href: profile?.githubUrl || FALLBACK_PORTFOLIO.profile.githubUrl, icon: Github },
+    { label: 'LinkedIn', href: profile?.linkedinUrl || FALLBACK_PORTFOLIO.profile.linkedinUrl, icon: Linkedin },
+    { label: 'Email', href: profile?.email ? `mailto:${profile.email}` : `mailto:${FALLBACK_PORTFOLIO.profile.email}`, icon: Mail },
+    { label: 'Call / Collaborate', href: profile?.email ? `mailto:${profile.email}` : `mailto:${FALLBACK_PORTFOLIO.profile.email}`, icon: PhoneCall }
   ]
 
   return (

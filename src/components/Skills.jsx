@@ -1,35 +1,12 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
 import { Sparkles } from 'lucide-react'
 import SectionHeading from './SectionHeading'
-import { get } from '../api'
+import { FALLBACK_PORTFOLIO } from '../data/portfolioFallback'
 
-const Skills = () => {
-  const [skills, setSkills] = useState([])
-
-  useEffect(() => {
-    let mounted = true
-    get('/api/skills')
-      .then((data) => {
-        if (mounted) setSkills(data)
-      })
-      .catch(() => {
-        // leave empty if backend not available
-      })
-    return () => (mounted = false)
-  }, [])
-
-  const display = skills.length
-    ? skills
-    : [
-        { name: 'HTML', level: 90, icon: 'bi-filetype-html' },
-        { name: 'CSS', level: 88, icon: 'bi-filetype-css' },
-        { name: 'JavaScript', level: 86, icon: 'bi-filetype-js' },
-        { name: 'React', level: 84, icon: 'bi-cpu' },
-        { name: 'Node.js', level: 78, icon: 'bi-diagram-3' }
-      ]
+const Skills = ({ skills = FALLBACK_PORTFOLIO.skills }) => {
+  const display = skills.length ? skills : FALLBACK_PORTFOLIO.skills
 
   return (
     <section id="skills" className="section-pad">

@@ -1,23 +1,32 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { AlertCircle, ArrowLeft, CheckCircle2, ImagePlus, Upload } from 'lucide-react'
 import { adminDelete, adminGet, adminPost, adminPut, getAdminToken, setAdminToken } from '../../services/adminApi'
 import { API_BASE } from '../../services/api'
 
-const tabs = ['profile', 'projects', 'skills', 'education', 'messages']
+const tabs = ['profile', 'about', 'projects', 'skills', 'education', 'messages']
 
 const emptyProfile = {
   name: '',
   title: '',
   summary: '',
   bio: '',
+  intro: '',
+  projectsStat: '',
+  researchStat: '',
+  availabilityStat: '',
   resumeUrl: '',
   avatarUrl: '',
   githubUrl: '',
   linkedinUrl: '',
   email: ''
+}
+
+const emptyAbout = {
+  content: '',
+  extra: ''
 }
 
 const emptyProject = {
@@ -52,14 +61,48 @@ function resolveImageSrc(src) {
   return new URL(src, API_BASE).toString()
 }
 
+function statusClassName(type) {
+  if (type === 'success') {
+    return 'border-emerald-400/40 bg-emerald-400/10 text-emerald-100'
+  }
+
+  if (type === 'error') {
+    return 'border-roseglow-300/40 bg-roseglow-400/10 text-roseglow-100'
+  }
+
+  return 'border-sky-400/30 bg-sky-400/10 text-sky-100'
+}
+
+function ActionFeedback({ feedback, scope, className = 'mt-4' }) {
+  const item = feedback[scope]
+
+  if (!item?.message) {
+    return null
+  }
+
+  return (
+    <div className={`rounded-2xl border p-3 text-sm ${statusClassName(item.type)} ${className}`} role="status" aria-live="polite">
+      <div className="flex items-start gap-2">
+        {item.type === 'success' ? (
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+        ) : (
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        )}
+        <span>{item.message}</span>
+      </div>
+    </div>
+  )
+}
+
 function AdminPageContent() {
   // initialize as empty on server to avoid hydration mismatch; populate on mount
   const [token, setTokenState] = useState('')
   const [session, setSession] = useState(null)
-  const [status, setStatus] = useState('')
+  const [feedback, setFeedback] = useState({})
   const [activeTab, setActiveTab] = useState('profile')
   const [loginForm, setLoginForm] = useState({ email: '', password: '' })
   const [profile, setProfile] = useState(emptyProfile)
+  const [aboutForm, setAboutForm] = useState(emptyAbout)
   const [projects, setProjects] = useState([])
   const [skills, setSkills] = useState([])
   const [education, setEducation] = useState([])
@@ -70,9 +113,11 @@ function AdminPageContent() {
   const [avatarFile, setAvatarFile] = useState(null)
   const [avatarPreview, setAvatarPreview] = useState('')
   const [warningSeconds, setWarningSeconds] = useState(0)
+  const [isAvatarDragging, setIsAvatarDragging] = useState(false)
 
   const [lastActivity, setLastActivity] = useState(Date.now())
-  const [showPassword, setShowPassword] = useState(false)
+
+  const avatarInputRef = useRef(null)
 
   const router = useRouter()
 
@@ -81,15 +126,50 @@ function AdminPageContent() {
 
   const authed = Boolean(token)
 
+  function setStatus(scope, type, message) {
+    setFeedback((current) => ({ ...current, [scope]: { type, message } }))
+  }
+
+  function clearStatus(scope) {
+    setFeedback((current) => {
+      if (!current[scope]) {
+        return current
+      }
+
+      const next = { ...current }
+      delete next[scope]
+      return next
+    })
+  }
+
+  function handleAvatarSelection(file) {
+    if (!file) {
+      return
+    }
+
+    setAvatarFile(file)
+    setAvatarPreview(URL.createObjectURL(file))
+    setStatus('profile-avatar', 'info', `Image selected: ${file.name}. Save profile to upload it.`)
+  }
+
+  function clearAvatarSelection() {
+    setAvatarFile(null)
+    setAvatarPreview(profile.avatarUrl ? resolveImageSrc(profile.avatarUrl) : '')
+    if (avatarInputRef.current) {
+      avatarInputRef.current.value = ''
+    }
+  }
+
   // populate token from localStorage on client mount
   useEffect(() => {
     setTokenState(getAdminToken())
   }, [])
 
   async function loadData() {
-    const [sessionData, profileData, projectData, skillData, educationData, messageData] = await Promise.all([
+    const [sessionData, profileData, aboutData, projectData, skillData, educationData, messageData] = await Promise.all([
       adminGet('/session'),
       adminGet('/profile'),
+      adminGet('/about'),
       adminGet('/projects'),
       adminGet('/skills'),
       adminGet('/education'),
@@ -98,6 +178,10 @@ function AdminPageContent() {
 
     setSession(sessionData)
     setProfile(profileData || emptyProfile)
+    setAboutForm({
+      content: aboutData?.content || profileData?.bio || '',
+      extra: aboutData?.extra || profileData?.summary || ''
+    })
     setProjects(projectData || [])
     setSkills(skillData || [])
     setEducation(educationData || [])
@@ -112,7 +196,7 @@ function AdminPageContent() {
 
     loadData().catch((error) => {
       console.error(error)
-      setStatus('Session expired.')
+      setStatus('session', 'error', error?.message || 'Session expired.')
       handleLogout()
     })
   }, [token])
@@ -163,7 +247,7 @@ function AdminPageContent() {
     setAdminToken('')
     setTokenState('')
     setSession(null)
-    setStatus('Logged out.')
+    clearStatus('session')
     // redirect to home page after logout
     try {
       router.push('/')
@@ -180,91 +264,206 @@ function AdminPageContent() {
       setAdminToken(result.token)
       setTokenState(result.token)
       setLoginForm({ email: '', password: '' })
-      setStatus('Signed in.')
+      setStatus('login', 'success', 'Signed in successfully.')
     } catch (error) {
       console.error(error)
-      // show specific server-provided message when available
-      setStatus(error?.message || 'Invalid credentials.')
+      setStatus('login', 'error', error?.message || 'Invalid credentials.')
     }
   }
 
   async function saveProfile() {
-    const formData = new FormData()
+    try {
+      const formData = new FormData()
 
-    Object.entries(profile).forEach(([key, value]) => {
-      if (key === 'avatarUrl') {
-        return
+      Object.entries(profile).forEach(([key, value]) => {
+        if (key === 'avatarUrl') {
+          return
+        }
+
+        formData.append(key, value || '')
+      })
+
+      if (avatarFile) {
+        formData.append('avatar', avatarFile)
       }
 
-      formData.append(key, value || '')
-    })
-
-    if (avatarFile) {
-      formData.append('avatar', avatarFile)
+      const updated = await adminPut('/profile', formData)
+      setProfile(updated)
+      setAboutForm({
+        content: updated?.bio || '',
+        extra: updated?.summary || ''
+      })
+      setAvatarPreview(updated?.avatarUrl ? resolveImageSrc(updated.avatarUrl) : '')
+      setAvatarFile(null)
+      setStatus('profile-save', 'success', avatarFile ? 'Profile saved and image uploaded successfully.' : 'Profile saved successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus('profile-save', 'error', error?.message || 'Failed to save profile.')
     }
+  }
 
-    const updated = await adminPut('/profile', formData)
-    setProfile(updated)
-    setAvatarPreview(updated?.avatarUrl ? resolveImageSrc(updated.avatarUrl) : '')
-    setAvatarFile(null)
-    setStatus('Profile saved.')
+  async function saveAbout() {
+    try {
+      const updated = await adminPut('/about', aboutForm)
+      const nextContent = updated?.bio || aboutForm.content
+      const nextExtra = updated?.summary || aboutForm.extra
+
+      setProfile((current) => ({
+        ...current,
+        bio: nextContent,
+        summary: nextExtra
+      }))
+      setAboutForm({ content: nextContent, extra: nextExtra })
+      setStatus('about-save', 'success', 'About section saved successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus('about-save', 'error', error?.message || 'Failed to save about section.')
+    }
   }
 
   async function createProject(event) {
     event.preventDefault()
-    const result = await adminPost('/projects', {
-      ...projectForm,
-      tech: splitTech(projectForm.techText)
-    })
-    setProjects((current) => [result, ...current])
-    setProjectForm(emptyProject)
-    setStatus('Project created.')
+    try {
+      const result = await adminPost('/projects', {
+        ...projectForm,
+        tech: splitTech(projectForm.techText)
+      })
+      setProjects((current) => [result, ...current])
+      setProjectForm(emptyProject)
+      setStatus('project-create', 'success', 'Project created successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus('project-create', 'error', error?.message || 'Failed to create project.')
+    }
   }
 
   async function saveProject(project) {
-    const result = await adminPut(`/projects/${project.id}`, project)
-    setProjects((current) => current.map((item) => (item.id === project.id ? result : item)))
-    setStatus('Project saved.')
+    const scope = `project-${project.id}`
+
+    try {
+      const result = await adminPut(`/projects/${project.id}`, project)
+      setProjects((current) => current.map((item) => (item.id === project.id ? result : item)))
+      setStatus(scope, 'success', 'Project updated successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to update project.')
+    }
   }
 
   async function removeProject(projectId) {
-    await adminDelete(`/projects/${projectId}`)
-    setProjects((current) => current.filter((item) => item.id !== projectId))
-    setStatus('Project deleted.')
+    const scope = `project-${projectId}`
+
+    try {
+      await adminDelete(`/projects/${projectId}`)
+      setStatus(scope, 'success', 'Project deleted successfully.')
+      window.setTimeout(() => {
+        setProjects((current) => current.filter((item) => item.id !== projectId))
+        clearStatus(scope)
+      }, 1600)
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to delete project.')
+    }
   }
 
   async function createSkill(event) {
     event.preventDefault()
-    const result = await adminPost('/skills', skillForm)
-    setSkills((current) => [result, ...current])
-    setSkillForm(emptySkill)
-    setStatus('Skill created.')
+    try {
+      const result = await adminPost('/skills', skillForm)
+      setSkills((current) => [result, ...current])
+      setSkillForm(emptySkill)
+      setStatus('skill-create', 'success', 'Skill created successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus('skill-create', 'error', error?.message || 'Failed to create skill.')
+    }
+  }
+
+  async function saveSkill(skill) {
+    const scope = `skill-${skill.id}`
+
+    try {
+      const result = await adminPut(`/skills/${skill.id}`, skill)
+      setSkills((current) => current.map((item) => (item.id === skill.id ? result : item)))
+      setStatus(scope, 'success', 'Skill updated successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to update skill.')
+    }
   }
 
   async function removeSkill(skillId) {
-    await adminDelete(`/skills/${skillId}`)
-    setSkills((current) => current.filter((item) => item.id !== skillId))
-    setStatus('Skill deleted.')
+    const scope = `skill-${skillId}`
+
+    try {
+      await adminDelete(`/skills/${skillId}`)
+      setStatus(scope, 'success', 'Skill deleted successfully.')
+      window.setTimeout(() => {
+        setSkills((current) => current.filter((item) => item.id !== skillId))
+        clearStatus(scope)
+      }, 1600)
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to delete skill.')
+    }
   }
 
   async function createEducation(event) {
     event.preventDefault()
-    const result = await adminPost('/education', educationForm)
-    setEducation((current) => [result, ...current])
-    setEducationForm(emptyEducation)
-    setStatus('Education saved.')
+    try {
+      const result = await adminPost('/education', educationForm)
+      setEducation((current) => [result, ...current])
+      setEducationForm(emptyEducation)
+      setStatus('education-create', 'success', 'Education created successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus('education-create', 'error', error?.message || 'Failed to create education record.')
+    }
+  }
+
+  async function saveEducation(record) {
+    const scope = `education-${record.id}`
+
+    try {
+      const result = await adminPut(`/education/${record.id}`, record)
+      setEducation((current) => current.map((item) => (item.id === record.id ? result : item)))
+      setStatus(scope, 'success', 'Education updated successfully.')
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to update education record.')
+    }
   }
 
   async function removeEducation(recordId) {
-    await adminDelete(`/education/${recordId}`)
-    setEducation((current) => current.filter((item) => item.id !== recordId))
-    setStatus('Education deleted.')
+    const scope = `education-${recordId}`
+
+    try {
+      await adminDelete(`/education/${recordId}`)
+      setStatus(scope, 'success', 'Education deleted successfully.')
+      window.setTimeout(() => {
+        setEducation((current) => current.filter((item) => item.id !== recordId))
+        clearStatus(scope)
+      }, 1600)
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to delete education record.')
+    }
   }
 
   async function removeMessage(messageId) {
-    await adminDelete(`/contacts/${messageId}`)
-    setMessages((current) => current.filter((item) => item.id !== messageId))
-    setStatus('Contact deleted.')
+    const scope = `message-${messageId}`
+
+    try {
+      await adminDelete(`/contacts/${messageId}`)
+      setStatus(scope, 'success', 'Message deleted successfully.')
+      window.setTimeout(() => {
+        setMessages((current) => current.filter((item) => item.id !== messageId))
+        clearStatus(scope)
+      }, 1600)
+    } catch (error) {
+      console.error(error)
+      setStatus(scope, 'error', error?.message || 'Failed to delete message.')
+    }
   }
 
   const sessionLabel = useMemo(() => {
@@ -307,8 +506,8 @@ function AdminPageContent() {
             <button type="submit" className="btn-primary justify-self-start">
               Sign in
             </button>
+            <ActionFeedback feedback={feedback} scope="login" />
           </form>
-          {status ? <p className="mt-4 text-sm text-slate-300">{status}</p> : null}
         </section>
       </main>
     )
@@ -334,6 +533,7 @@ function AdminPageContent() {
             Inactivity logout in {warningSeconds}s
           </p>
         ) : null}
+        <ActionFeedback feedback={feedback} scope="session" className="mt-4" />
       </section>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -362,7 +562,7 @@ function AdminPageContent() {
             }}
           >
             <h2 className="text-2xl font-semibold text-white">Profile</h2>
-            <p className="mt-2 text-sm text-slate-300">Update the hero portrait, bio, and social links from one place.</p>
+            <p className="mt-2 text-sm text-slate-300">Edit the hero copy, stats, contact links, and portrait from one place.</p>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2">
               {[
@@ -370,7 +570,10 @@ function AdminPageContent() {
                 ['title', 'Title'],
                 ['summary', 'Summary'],
                 ['bio', 'Bio'],
-                ['resumeUrl', 'Resume URL'],
+                ['intro', 'Intro paragraph'],
+                ['projectsStat', 'Projects stat'],
+                ['researchStat', 'Research stat'],
+                ['availabilityStat', 'Availability stat'],
                 ['githubUrl', 'GitHub URL'],
                 ['linkedinUrl', 'LinkedIn URL'],
                 ['email', 'Email']
@@ -395,23 +598,68 @@ function AdminPageContent() {
               ))}
             </div>
 
-            <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-              <label className="flex cursor-pointer flex-col gap-3 rounded-[1.5rem] border border-dashed border-white/15 bg-white/[0.04] p-4 transition hover:border-roseglow-300/50 hover:bg-white/[0.06]">
-                <span className="text-xs uppercase tracking-[0.25em] text-white/45">Hero portrait</span>
-                <span className="text-sm text-white/80">Choose a local image and upload it.</span>
+            <div className="mt-5 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+              <div
+                className={`rounded-[1.5rem] border border-dashed p-4 transition ${isAvatarDragging ? 'border-roseglow-300/60 bg-white/[0.08]' : 'border-white/15 bg-white/[0.04]'} cursor-pointer`}
+                role="button"
+                tabIndex={0}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  setIsAvatarDragging(true)
+                }}
+                onDragLeave={() => setIsAvatarDragging(false)}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  setIsAvatarDragging(false)
+                  const file = event.dataTransfer.files?.[0] || null
+                  handleAvatarSelection(file)
+                }}
+                onClick={() => avatarInputRef.current?.click()}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    avatarInputRef.current?.click()
+                  }
+                }}
+              >
                 <input
+                  ref={avatarInputRef}
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0] || null
-                    setAvatarFile(file)
-                    if (file) {
-                      setAvatarPreview(URL.createObjectURL(file))
-                    }
-                  }}
+                  onChange={(event) => handleAvatarSelection(event.target.files?.[0] || null)}
                 />
-              </label>
+
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.06] text-roseglow-200">
+                    <ImagePlus className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-xs uppercase tracking-[0.25em] text-white/45">Hero portrait</p>
+                    <p className="mt-2 text-sm text-white/80">Drag and drop an image here or choose a file. Save profile to upload it.</p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn-secondary gap-2"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      avatarInputRef.current?.click()
+                    }}
+                  >
+                    <Upload className="h-4 w-4" />
+                    Choose image
+                  </button>
+                </div>
+                {avatarFile ? (
+                  <div className="mt-4 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.05] px-4 py-3 text-sm text-white/80">
+                    <span className="truncate">Selected: {avatarFile.name}</span>
+                    <button type="button" className="text-xs uppercase tracking-[0.2em] text-roseglow-200" onClick={(event) => { event.stopPropagation(); clearAvatarSelection() }}>
+                      Clear
+                    </button>
+                  </div>
+                ) : null}
+                <ActionFeedback feedback={feedback} scope="profile-avatar" className="mt-4" />
+              </div>
 
               <div className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-[rgba(255,255,255,0.05)]">
                 <div className="grid min-h-56 place-items-center p-3">
@@ -433,32 +681,72 @@ function AdminPageContent() {
               <button
                 type="button"
                 className="btn-secondary"
-                onClick={() => {
-                  setAvatarFile(null)
-                  setAvatarPreview(profile.avatarUrl ? resolveImageSrc(profile.avatarUrl) : '')
-                }}
+                onClick={clearAvatarSelection}
               >
                 Reset preview
               </button>
             </div>
+            <ActionFeedback feedback={feedback} scope="profile-save" />
           </form>
 
           <article className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-soft">
             <h3 className="text-xl font-semibold text-white">Snapshot</h3>
-            <p className="mt-3 text-sm text-slate-300">{profile.title}</p>
-            <p className="mt-3 text-sm leading-7 text-slate-300">{profile.summary}</p>
-            <p className="mt-3 text-sm leading-7 text-slate-300">{profile.bio}</p>
-            <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4">
-              <p className="text-xs uppercase tracking-[0.25em] text-white/45">Current portrait</p>
-              <div className="mt-3 overflow-hidden rounded-[1.25rem] border border-white/10">
-                {profile.avatarUrl ? (
-                  <img src={resolveImageSrc(profile.avatarUrl)} alt="Current portrait" className="h-56 w-full object-cover" />
-                ) : (
-                  <div className="grid h-56 place-items-center bg-[linear-gradient(135deg,rgba(255,182,193,0.12),rgba(183,153,255,0.12))] text-white/60">
-                    No portrait uploaded yet
-                  </div>
-                )}
+            <p className="mt-3 text-sm text-slate-300">{profile.name || 'Wakuru Juma Gilagali'}</p>
+            <p className="mt-2 text-sm text-slate-300">{profile.title || 'Final-year software developer'}</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{profile.summary || 'Software Engineer · Data Analyst · AI Builder'}</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{profile.bio || 'Final-year student at Eastern Africa Statistical Training Centre (EASTC), expected to graduate in July 2026.'}</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{profile.intro || 'Passionate about building modern web applications, analyzing data, and applying AI solutions to real-world problems.'}</p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              {[
+                { label: 'Projects', value: profile.projectsStat || '18+' },
+                { label: 'Research', value: profile.researchStat || 'AI + Data' },
+                { label: 'Availability', value: profile.availabilityStat || 'Open to collaborate' }
+              ].map((item) => (
+                <div key={item.label} className="rounded-[1.25rem] border border-white/10 bg-white/[0.04] px-4 py-3">
+                  <p className="text-[0.62rem] uppercase tracking-[0.24em] text-white/45">{item.label}</p>
+                  <p className="mt-2 text-sm font-semibold text-white">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </article>
+        </section>
+      ) : null}
+
+      {activeTab === 'about' ? (
+        <section className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
+          <form className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-soft" onSubmit={(event) => { event.preventDefault(); saveAbout() }}>
+            <h2 className="text-2xl font-semibold text-white">About</h2>
+            <p className="mt-2 text-sm text-slate-300">Edit the public About section copy shown on the front end.</p>
+            <div className="mt-5 grid gap-4">
+              <div>
+                <label className="text-xs uppercase tracking-[0.25em] text-white/45">About paragraph</label>
+                <textarea
+                  className="input-field min-h-36"
+                  placeholder="About paragraph"
+                  value={aboutForm.content}
+                  onChange={(event) => setAboutForm((current) => ({ ...current, content: event.target.value }))}
+                />
               </div>
+              <div>
+                <label className="text-xs uppercase tracking-[0.25em] text-white/45">Support paragraph</label>
+                <textarea
+                  className="input-field min-h-36"
+                  placeholder="Support paragraph"
+                  value={aboutForm.extra}
+                  onChange={(event) => setAboutForm((current) => ({ ...current, extra: event.target.value }))}
+                />
+              </div>
+              <button type="submit" className="btn-primary justify-self-start">Save about section</button>
+              <ActionFeedback feedback={feedback} scope="about-save" />
+            </div>
+          </form>
+
+          <article className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-soft">
+            <h3 className="text-xl font-semibold text-white">Public preview</h3>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{aboutForm.content || 'Final-year student engineer specializing in frontend, backend, and data science.'}</p>
+            <p className="mt-3 text-sm leading-7 text-slate-300">{aboutForm.extra || 'Focused on building human-centered, intelligent products for real-world impact.'}</p>
+            <div className="mt-6 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/75">
+              This content powers the front-end About section.
             </div>
           </article>
         </section>
@@ -479,6 +767,7 @@ function AdminPageContent() {
                 Featured
               </label>
               <button type="submit" className="btn-primary justify-self-start">Create project</button>
+              <ActionFeedback feedback={feedback} scope="project-create" />
             </div>
           </form>
 
@@ -488,9 +777,12 @@ function AdminPageContent() {
                 <input className="input-field" value={project.title || ''} onChange={(event) => setProjects((current) => current.map((item) => (item.id === project.id ? { ...item, title: event.target.value } : item)))} />
                 <textarea className="input-field mt-3 min-h-24" value={project.description || ''} onChange={(event) => setProjects((current) => current.map((item) => (item.id === project.id ? { ...item, description: event.target.value } : item)))} />
                 <input className="input-field mt-3" value={(project.tech || []).join(', ')} onChange={(event) => setProjects((current) => current.map((item) => (item.id === project.id ? { ...item, tech: splitTech(event.target.value) } : item)))} />
-                <div className="mt-4 flex gap-3">
-                  <button type="button" className="btn-secondary" onClick={() => saveProject(project)}>Save</button>
-                  <button type="button" className="btn-secondary" onClick={() => removeProject(project.id)}>Delete</button>
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button type="button" className="btn-secondary" onClick={() => saveProject(project)}>Save</button>
+                    <button type="button" className="btn-secondary" onClick={() => removeProject(project.id)}>Delete</button>
+                  </div>
+                  <ActionFeedback feedback={feedback} scope={`project-${project.id}`} className="mt-0" />
                 </div>
               </article>
             ))}
@@ -508,18 +800,24 @@ function AdminPageContent() {
               <input className="input-field" placeholder="Icon" value={skillForm.icon} onChange={(event) => setSkillForm((current) => ({ ...current, icon: event.target.value }))} />
               <input className="input-field" placeholder="Category" value={skillForm.category} onChange={(event) => setSkillForm((current) => ({ ...current, category: event.target.value }))} />
               <button type="submit" className="btn-primary justify-self-start">Create skill</button>
+              <ActionFeedback feedback={feedback} scope="skill-create" />
             </div>
           </form>
 
           <div className="grid gap-4 md:grid-cols-2">
             {skills.map((skill) => (
               <article key={skill.id} className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-soft">
-                <p className="text-lg font-semibold text-white">{skill.name}</p>
-                <p className="text-sm text-slate-300">{skill.category}</p>
-                <p className="text-sm text-slate-300">Level: {skill.level}</p>
-                <button type="button" className="btn-secondary mt-4" onClick={() => removeSkill(skill.id)}>
-                  Delete
-                </button>
+                <input className="input-field" value={skill.name || ''} onChange={(event) => setSkills((current) => current.map((item) => (item.id === skill.id ? { ...item, name: event.target.value } : item)))} />
+                <input className="input-field mt-3" placeholder="Category" value={skill.category || ''} onChange={(event) => setSkills((current) => current.map((item) => (item.id === skill.id ? { ...item, category: event.target.value } : item)))} />
+                <input className="input-field mt-3" type="number" placeholder="Level" value={skill.level ?? 0} onChange={(event) => setSkills((current) => current.map((item) => (item.id === skill.id ? { ...item, level: Number(event.target.value) } : item)))} />
+                <input className="input-field mt-3" placeholder="Icon" value={skill.icon || ''} onChange={(event) => setSkills((current) => current.map((item) => (item.id === skill.id ? { ...item, icon: event.target.value } : item)))} />
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button type="button" className="btn-secondary" onClick={() => saveSkill(skill)}>Save</button>
+                    <button type="button" className="btn-secondary" onClick={() => removeSkill(skill.id)}>Delete</button>
+                  </div>
+                  <ActionFeedback feedback={feedback} scope={`skill-${skill.id}`} className="mt-0" />
+                </div>
               </article>
             ))}
           </div>
@@ -538,19 +836,26 @@ function AdminPageContent() {
               <input className="input-field" placeholder="End year" type="number" value={educationForm.endYear} onChange={(event) => setEducationForm((current) => ({ ...current, endYear: event.target.value }))} />
               <textarea className="input-field min-h-24" placeholder="Description" value={educationForm.description} onChange={(event) => setEducationForm((current) => ({ ...current, description: event.target.value }))} />
               <button type="submit" className="btn-primary justify-self-start">Save education</button>
+              <ActionFeedback feedback={feedback} scope="education-create" />
             </div>
           </form>
 
           <div className="grid gap-4">
             {education.map((item) => (
               <article key={item.id} className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-soft">
-                <p className="text-lg font-semibold text-white">{item.school}</p>
-                <p className="text-sm text-slate-300">{item.degree} {item.field ? `• ${item.field}` : ''}</p>
-                <p className="text-sm text-slate-300">{item.startYear} - {item.endYear}</p>
-                <p className="mt-2 text-sm text-slate-300">{item.description}</p>
-                <button type="button" className="btn-secondary mt-4" onClick={() => removeEducation(item.id)}>
-                  Delete
-                </button>
+                <input className="input-field" placeholder="School" value={item.school || ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, school: event.target.value } : row)))} />
+                <input className="input-field mt-3" placeholder="Degree" value={item.degree || ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, degree: event.target.value } : row)))} />
+                <input className="input-field mt-3" placeholder="Field" value={item.field || ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, field: event.target.value } : row)))} />
+                <input className="input-field mt-3" type="number" placeholder="Start year" value={item.startYear ?? ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, startYear: event.target.value } : row)))} />
+                <input className="input-field mt-3" type="number" placeholder="End year" value={item.endYear ?? ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, endYear: event.target.value } : row)))} />
+                <textarea className="input-field mt-3 min-h-24" placeholder="Description" value={item.description || ''} onChange={(event) => setEducation((current) => current.map((row) => (row.id === item.id ? { ...row, description: event.target.value } : row)))} />
+                <div className="mt-4 flex flex-col gap-3">
+                  <div className="flex gap-3">
+                    <button type="button" className="btn-secondary" onClick={() => saveEducation(item)}>Save</button>
+                    <button type="button" className="btn-secondary" onClick={() => removeEducation(item.id)}>Delete</button>
+                  </div>
+                  <ActionFeedback feedback={feedback} scope={`education-${item.id}`} className="mt-0" />
+                </div>
               </article>
             ))}
           </div>
@@ -558,21 +863,62 @@ function AdminPageContent() {
       ) : null}
 
       {activeTab === 'messages' ? (
-        <section className="grid gap-4">
+        <section className="grid gap-6">
+          <div className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-soft">
+            <h2 className="text-2xl font-semibold text-white">Contact messages</h2>
+            <p className="mt-2 text-sm text-slate-300">Submissions from the public contact form. Each card shows the sender name, email, and message body.</p>
+          </div>
+
+          {messages.length === 0 ? (
+            <p className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] p-8 text-center text-sm text-slate-400">
+              No messages yet.
+            </p>
+          ) : null}
+
           {messages.map((message) => (
-            <article key={message.id} className="rounded-3xl border border-white/10 bg-white/5 p-5 shadow-soft">
-              <p className="text-lg font-semibold text-white">{message.name}</p>
-              <p className="text-sm text-slate-300">{message.email}</p>
-              <p className="mt-3 text-sm text-slate-300">{message.message}</p>
-              <button type="button" className="btn-secondary mt-4" onClick={() => removeMessage(message.id)}>
-                Delete
-              </button>
+            <article key={message.id} className="rounded-3xl border border-white/10 bg-white/5 p-6 shadow-soft">
+              {message.createdAt ? (
+                <p className="mb-5 text-xs uppercase tracking-[0.22em] text-white/40">
+                  Received {new Date(message.createdAt).toLocaleString()}
+                </p>
+              ) : null}
+
+              <div className="grid gap-5">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/45">Name</p>
+                  <p className="mt-2 text-lg font-semibold text-white">{message.name || '—'}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/45">Email</p>
+                  {message.email ? (
+                    <a
+                      href={`mailto:${message.email}`}
+                      className="mt-2 inline-block text-base text-roseglow-200 underline-offset-4 transition hover:text-white hover:underline"
+                    >
+                      {message.email}
+                    </a>
+                  ) : (
+                    <p className="mt-2 text-base text-slate-300">—</p>
+                  )}
+                </div>
+
+                <div>
+                  <p className="text-xs uppercase tracking-[0.25em] text-white/45">Message</p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-slate-200">{message.message || '—'}</p>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-3">
+                <button type="button" className="btn-secondary self-start" onClick={() => removeMessage(message.id)}>
+                  Delete message
+                </button>
+                <ActionFeedback feedback={feedback} scope={`message-${message.id}`} className="mt-0" />
+              </div>
             </article>
           ))}
         </section>
       ) : null}
-
-      {status ? <p className="text-sm text-slate-300">{status}</p> : null}
     </main>
   )
 }
