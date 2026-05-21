@@ -28,3 +28,13 @@ backend/
 
 # Local environment
 .env
+
+# Next.js build output
+.next/
+
+# Vercel output
+out/
+
+# Misc
+.DS_Store
+.vscode/
