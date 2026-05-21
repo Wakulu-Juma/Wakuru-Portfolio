@@ -6,10 +6,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-white/10 bg-[rgba(15,10,31,0.55)] px-6 py-8 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 rounded-[2rem] border border-white/10 bg-white/5 px-6 py-5 md:flex-row md:items-center">
-        <div>
-          <p className="text-[0.68rem] uppercase tracking-[0.3em] text-white/45">Wakuru Juma Gilagali</p>
-          <p className="mt-2 max-w-xl text-sm leading-7 text-white/70">A premium portfolio built for elegant storytelling, thoughtful engineering, and data-driven impact.</p>
-        </div>
+        
         <div className="flex items-center gap-3">
           <a className="icon-button" href="#">
             <span className="sr-only">GitHub</span>

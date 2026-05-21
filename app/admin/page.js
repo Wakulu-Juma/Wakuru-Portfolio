@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { ArrowLeft } from 'lucide-react'
 import { adminDelete, adminGet, adminPost, adminPut, getAdminToken, setAdminToken } from '../../services/adminApi'
 import { API_BASE } from '../../services/api'
 
@@ -278,6 +279,14 @@ function AdminPageContent() {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-2xl items-center px-6 py-12">
         <section className="w-full rounded-[2rem] border border-white/10 bg-white/5 p-8 shadow-soft backdrop-blur-xl">
+          <a
+            href="/"
+            className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-roseglow-300/50 hover:bg-white/10"
+            aria-label="Back to home"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to home
+          </a>
           <p className="text-sm uppercase tracking-[0.3em] text-roseglow-300">Admin Dashboard</p>
           <h1 className="mt-3 font-display text-3xl text-white">Sign in</h1>
           <form className="mt-6 grid gap-4" onSubmit={handleLogin}>
