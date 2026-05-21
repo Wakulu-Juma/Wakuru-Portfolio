@@ -97,8 +97,8 @@ const About = ({ about = FALLBACK_PORTFOLIO.about, profile = FALLBACK_PORTFOLIO.
           >
             <div className="section-glow" />
             <div className="relative overflow-hidden rounded-[2rem] p-6">
-              <div className="absolute right-6 top-6 h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(255,182,193,0.2)_0%,transparent_70%)] blur-xl animate-float-slow" />
-              <div className="absolute bottom-4 left-4 h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(183,153,255,0.18)_0%,transparent_70%)] blur-xl animate-float-slow [animation-delay:-3s]" />
+              <div className="absolute right-6 top-6 hidden h-24 w-24 rounded-full bg-[radial-gradient(circle,rgba(255,182,193,0.2)_0%,transparent_70%)] blur-xl md:block md:animate-float-slow" />
+              <div className="absolute bottom-4 left-4 hidden h-28 w-28 rounded-full bg-[radial-gradient(circle,rgba(183,153,255,0.18)_0%,transparent_70%)] blur-xl md:block md:animate-float-slow [animation-delay:-3s]" />
 
               <div className="relative flex items-center gap-4">
                 <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,rgba(255,182,193,0.95),rgba(183,153,255,0.9))] text-[#220b2f] shadow-[0_18px_50px_rgba(255,182,193,0.25)]">

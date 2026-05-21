@@ -25,8 +25,7 @@ const Skills = ({ skills = FALLBACK_PORTFOLIO.skills }) => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.55, delay: index * 0.05 }}
-              whileHover={{ y: -6, scale: 1.02 }}
-              className="skill-card relative overflow-hidden"
+              className="skill-card relative overflow-hidden md:transition-transform md:hover:-translate-y-1.5 md:hover:scale-[1.02]"
             >
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,182,193,0.12),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(183,153,255,0.1),transparent_28%)]" />
               <div className="relative flex items-start justify-between gap-4">

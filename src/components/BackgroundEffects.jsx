@@ -1,6 +1,15 @@
 "use client"
 
-const BackgroundEffects = () => {
+const BackgroundEffects = ({ lite = false }) => {
+  if (lite) {
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_30%),linear-gradient(180deg,rgba(15,10,31,0.2),rgba(15,10,31,0.76))]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(183,153,255,0.12),transparent_24%),radial-gradient(circle_at_85%_12%,rgba(255,182,193,0.1),transparent_22%)]" />
+      </div>
+    )
+  }
+
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.04),transparent_30%),linear-gradient(180deg,rgba(15,10,31,0.2),rgba(15,10,31,0.76))]" />

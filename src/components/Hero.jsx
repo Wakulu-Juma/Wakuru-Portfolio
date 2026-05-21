@@ -15,7 +15,7 @@ const Hero = ({ profile = FALLBACK_PORTFOLIO.profile }) => {
     <section id="home" className="relative flex min-h-screen items-center overflow-hidden px-4 pb-16 pt-24 md:px-6">
       <div
         aria-hidden="true"
-        className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,rgba(183,153,255,0.12),rgba(255,182,193,0.08),rgba(255,255,255,0.03))] bg-[length:220%_220%] animate-shimmer"
+        className="absolute inset-0 -z-10 bg-[linear-gradient(120deg,rgba(183,153,255,0.12),rgba(255,182,193,0.08),rgba(255,255,255,0.03))] bg-[length:220%_220%] md:animate-shimmer"
       />
       <div className="mx-auto grid w-full max-w-7xl gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
         <div className="relative flex flex-col gap-7 text-center lg:max-w-2xl lg:text-left">

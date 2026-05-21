@@ -17,6 +17,12 @@ html {
   scroll-behavior: smooth;
 }
 
+@media (max-width: 767px) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
 body {
   margin: 0;
   font-family: var(--font-body), "Avenir Next", "Segoe UI", sans-serif;
@@ -228,4 +234,51 @@ body::before {
 
 .animate-border-glow {
   animation: borderGlow 4s ease-in-out infinite;
+}
+
+/* Mobile: reduce GPU-heavy effects that cause flicker/shimmer on phones */
+@media (max-width: 767px), (prefers-reduced-motion: reduce) {
+  .animate-grain,
+  .animate-shimmer,
+  .animate-float-slow,
+  .animate-border-glow {
+    animation: none !important;
+  }
+
+  .cursor-glow {
+    display: none !important;
+  }
+
+  body::before {
+    opacity: 0.06;
+  }
+
+  .glass,
+  .section-shell,
+  .skill-card,
+  .project-card,
+  .input-field,
+  .icon-button,
+  .chip {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  .glass {
+    background-color: rgba(255, 255, 255, 0.09);
+  }
+
+  .section-shell {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.04));
+  }
+
+  [class*='backdrop-blur'] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+.portfolio-root {
+  isolation: isolate;
+  transform: translateZ(0);
 }
