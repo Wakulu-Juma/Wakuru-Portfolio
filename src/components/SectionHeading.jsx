@@ -1,17 +1,20 @@
+"use client"
+
 import { motion } from 'framer-motion'
 
 const SectionHeading = ({ eyebrow, title, subtitle, align = 'left' }) => {
   const alignClass = align === 'center' ? 'text-center items-center' : 'text-left items-start'
 
   return (
-    <div className={`flex flex-col gap-3 ${alignClass}`}>
+    <div className={`flex max-w-3xl flex-col gap-4 ${alignClass}`}>
       <motion.p
         initial={{ opacity: 0, y: 8 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.6 }}
         transition={{ duration: 0.5 }}
-        className="text-sm uppercase tracking-[0.3em] text-roseglow-300"
+        className="inline-flex items-center gap-2 text-[0.72rem] uppercase tracking-[0.4em] text-roseglow-200"
       >
+        <span className="h-px w-10 bg-gradient-to-r from-transparent via-roseglow-300 to-transparent" />
         {eyebrow}
       </motion.p>
       <motion.h2
@@ -19,7 +22,7 @@ const SectionHeading = ({ eyebrow, title, subtitle, align = 'left' }) => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.6 }}
         transition={{ duration: 0.6 }}
-        className="font-display text-3xl md:text-4xl text-slate-100"
+        className="max-w-2xl font-display text-4xl leading-[1.05] text-white md:text-5xl"
       >
         {title}
       </motion.h2>
@@ -29,7 +32,7 @@ const SectionHeading = ({ eyebrow, title, subtitle, align = 'left' }) => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.6 }}
           transition={{ duration: 0.6, delay: 0.05 }}
-          className="max-w-2xl text-base md:text-lg text-slate-300"
+          className="max-w-2xl text-base leading-8 text-white/72 md:text-[1.05rem]"
         >
           {subtitle}
         </motion.p>

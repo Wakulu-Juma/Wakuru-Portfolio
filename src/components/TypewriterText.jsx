@@ -1,3 +1,5 @@
+"use client"
+
 import { useEffect, useState } from 'react'
 
 const TypewriterText = ({ texts = [], speed = 38, pause = 1400 }) => {
@@ -34,7 +36,7 @@ const TypewriterText = ({ texts = [], speed = 38, pause = 1400 }) => {
   const display = texts.length ? texts[index % texts.length].substring(0, subIndex) : ''
 
   return (
-    <span className="typewriter" aria-live="polite">
+    <span className="typewriter bg-gradient-to-r from-roseglow-200 via-white to-lavender-200 bg-clip-text text-transparent" aria-live="polite">
       {display}
       <span className="typewriter-caret" aria-hidden="true" />
     </span>

@@ -24,7 +24,7 @@ About (/api/about)
 - PUT /api/about : Update or create about content (body: { content, extra })
 
 Frontend helpers
-- `src/api.js` exposes `API_BASE`, `get(path)`, and `post(path, body)`. Default API base: VITE_API_URL or http://localhost:4000
+- `src/api.js` exposes `API_BASE`, `get(path)`, and `post(path, body)`. Default API base: `NEXT_PUBLIC_API_URL` or `http://localhost:4000`
 
 Files scanned
 - backend/server.js

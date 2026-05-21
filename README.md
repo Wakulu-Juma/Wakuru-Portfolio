@@ -1,12 +1,12 @@
 # Wakuru Juma Gilagali Portfolio
 
-A modern, responsive personal portfolio built with React, Vite, Tailwind CSS, and Framer Motion.
+Next.js portfolio and admin dashboard built around the existing Wakuru content, with Tailwind CSS, Framer Motion, and a modular App Router structure.
 
 ## Features
-- Elegant glassmorphism UI with soft gradients and animated background effects
-- Responsive layout for mobile, tablet, and desktop
-- Scroll reveal animations and custom cursor glow
-- Modular React components for each section
+- Public portfolio sections for hero, about, skills, projects, and contact
+- Admin dashboard scaffold for login, content editing, CRUD management, and inactivity logout handling
+- Dark glassmorphism UI with animated gradients and section reveals
+- API helper that can target the backend with bearer tokens for admin routes
 
 ## Getting Started
 
@@ -31,11 +31,12 @@ npm run preview
 ```
 
 ## Project Structure
-- `src/components` contains reusable UI sections
-- `src/App.jsx` assembles the page
-- `src/index.css` holds Tailwind layers and custom styles
+- `app/` contains the Next.js routes, layout, and admin dashboard
+- `src/components/` preserves the current portfolio sections and motion-driven UI
+- `src/api.js` handles backend requests
+- `app/globals.css` contains the Tailwind layers and shared styles
 
 ## Customization
-- Update project links in `src/components/Projects.jsx`
-- Replace the image placeholder in `src/components/About.jsx`
-- Wire the resume button and social links in `src/components/Hero.jsx` and `src/components/Contact.jsx`
+- Update backend URLs in `src/api.js` or via `NEXT_PUBLIC_API_URL`
+- Replace project and profile data in the component files or move it into backend-driven content
+- Extend `app/admin/page.js` and the backend scaffold to wire real auth and CRUD flows
